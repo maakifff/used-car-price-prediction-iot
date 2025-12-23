@@ -1,59 +1,20 @@
-import pandas as pd
-import random
+# Install dependencies as needed:
+# pip install kagglehub[pandas-datasets]
+import kagglehub
+from kagglehub import KaggleDatasetAdapter
 
-# Senin istediğin kriterlere uygun sahte bir veri seti oluşturalım
-# Gerçek projede burası "pd.read_csv('internet_verisi.csv')" olacak.
+# Set the path to the file you'd like to load
+file_path = ""
 
-def create_mock_data():
-    # Kriterlerin: Yakıt, Vites, KM Durumu, Fiyat
-    data = {
-        'brand': ['Fiat', 'Renault', 'Volkswagen', 'Ford', 'BMW'] * 20,
-        'model': ['Egea', 'Clio', 'Passat', 'Focus', '320i'] * 20,
-        'fuel_type': [],  # Dizel mi Benzin mi?
-        'gear': [],       # Manuel mi Otomatik mi?
-        'km': [],         # Sayısal değer
-        'price': []       # Tahmin etmeye çalışacağımız hedef
-    }
+# Load the latest version
+df = kagglehub.load_dataset(
+  KaggleDatasetAdapter.PANDAS,
+  "akshaydattatraykhare/car-details-dataset",
+  file_path,
+  # Provide any additional arguments like 
+  # sql_query or pandas_kwargs. See the 
+  # documenation for more information:
+  # https://github.com/Kaggle/kagglehub/blob/main/README.md#kaggledatasetadapterpandas
+)
 
-    # 100 tane rastgele araba üretelim
-    for _ in range(100):
-        # Rastgele seçimler
-        fuel = random.choice(['Dizel', 'Benzin'])
-        gear = random.choice(['Manuel', 'Otomatik'])
-        km_value = random.randint(10000, 300000) # 10 bin ile 300 bin arası
-        
-        # Fiyatı biraz mantıklı yapalım (Düşük KM ve Otomatik daha pahalı olsun)
-        base_price = 800000
-        if fuel == 'Dizel': base_price += 50000
-        if gear == 'Otomatik': base_price += 70000
-        if km_value > 200000: base_price -= 150000 # 200 bini aştıysa fiyat düşer
-        
-        # Listelere ekle
-        data['fuel_type'].append(fuel)
-        data['gear'].append(gear)
-        data['km'].append(km_value)
-        data['price'].append(base_price + random.randint(-20000, 20000))
-
-    # Veriyi DataFrame'e (Tabloya) çevir
-    df = pd.DataFrame(data)
-    
-    return df
-
-# Veriyi oluştur
-araba_verisi = create_mock_data()
-
-# Senin istediğin "200 bin km'yi aşmış mı?" sütununu ekleyelim (Feature Engineering)
-# Bu kısım veri işleme (Data Preparation) adımıdır[cite: 10].
-araba_verisi['is_high_mileage'] = araba_verisi['km'] > 200000
-
-# Veriyi görelim
-print("--- Örnek Veri (İlk 5 Satır) ---")
-print(araba_verisi.head())
-
-print("\n--- İstatistikler ---")
-print(araba_verisi.groupby(['fuel_type', 'is_high_mileage'])['price'].mean())
-
-# CSV olarak data klasörüne kaydet (PDF kuralı: raw data saklanmalı )
-# Not: Bilgisayarında 'data/raw' klasörü yoksa hata verebilir, önce klasörü açmalısın.
-# araba_verisi.to_csv('data/raw/ornek_araba_verisi.csv', index=False)
-print("\nVeri seti sanal olarak oluşturuldu. Kaydetmek için yorum satırını kaldırabilirsin.")
+print("First 5 records:", df.head())
