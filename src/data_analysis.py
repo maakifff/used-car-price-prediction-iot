@@ -1,38 +1,41 @@
-# Dosya Yolu: src/data_ingest.py
-
-import kagglehub
-from kagglehub import KaggleDatasetAdapter
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 import os
 
-print("Veri indirme işlemi başlıyor...")
+# 1. VERİYİ OKUMA (Kitabı Açıyoruz)
+# Verinin 'data/raw' klasöründe olduğunu varsayıyoruz.
+# Eğer indirdiğin dosya adı farklıysa aşağıyı değiştir (örn: 'araba_verisi.csv')
+dosya_yolu = 'data/raw/audi.csv' 
 
-# 1. Senin attığın kod bloğu: Veriyi Kaggle'dan çeker
-# Not: Bu veri seti birden fazla araba markasını (Audi, BMW, Ford vb.) içeriyor olabilir.
-df = kagglehub.load_dataset(
-  KaggleDatasetAdapter.PANDAS,
-  "adityadesai13/used-car-dataset-ford-and-mercedes",
-  # Dosya yolu belirtilmezse genelde tüm csvleri ya da ana csvyi getirmeye çalışır
-  # Hata almamak için kütüphanenin indirdiği yeri kullanıp birleştirme yapabiliriz
-)
+# Dosya var mı kontrol edelim
+if os.path.exists(dosya_yolu):
+    df = pd.read_csv(dosya_yolu)
+    print("✅ Veri başarıyla okundu!")
+else:
+    print("❌ HATA: Dosya bulunamadı! Lütfen data/raw içine csv dosyasını koyduğuna emin ol.")
+    exit()
 
-# Eğer df bir sözlük (dictionary) dönerse (çoklu dosya varsa), bunları birleştirelim
-if isinstance(df, dict):
-    print("Birden fazla dosya bulundu, hepsi birleştiriliyor...")
-    df = pd.concat(df.values(), ignore_index=True)
+# 2. VERİYİ ANLAMA (Kitabın Özetine Bakıyoruz)
+print("\n--- Veri Seti Özeti ---")
+print(f"Toplam Araç Sayısı: {len(df)}")
+print("\nİlk 5 Satır:")
+print(df.head())
 
-print("Veri başarıyla indirildi!")
-print("İlk 5 kayıt:", df.head())
+# 3. GRAFİK ÇİZME (Görselleştirme) [PDF: Insightful Visualization]
+# KM ve Fiyat arasındaki ilişkiyi çizelim.
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='km_driven', y='selling_price', data=df, alpha=0.5)
+plt.title('Kilometre vs Satış Fiyatı (Ne kadar çok KM, o kadar düşük fiyat)')
+plt.xlabel('Kilometre (KM)')
+plt.ylabel('Fiyat (TL)')
 
-# 2. ÖNEMLİ KISIM: Veriyi 'data/raw' klasörüne kaydetmek
-# PDF kuralı: Ham veriler data klasöründe olmalı[cite: 45].
+# 4. GRAFİĞİ KAYDETME
+# Grafiği ekranda göstermek yerine dosyaya kaydedelim.
+grafik_yolu = 'fiyat_km_grafigi.png'
+plt.savefig(grafik_yolu)
+print(f"\n✅ Grafik çizildi ve '{grafik_yolu}' olarak kaydedildi. O dosyayı açıp bakabilirsin!")
 
-# Üst klasöre çıkıp data/raw yolunu bulalım
-save_path = os.path.join("..", "data", "raw", "araba_verisi.csv")
-
-# Klasör yoksa oluştur
-os.makedirs(os.path.dirname(save_path), exist_ok=True)
-
-# CSV olarak kaydet
-df.to_csv(save_path, index=False)
-print(f"Veri şuraya kaydedildi: {save_path}")
+# Ortalama fiyatı da söyleyelim
+ort_fiyat = df['selling_price'].mean()
+print(f"\nBu veri setindeki araçların ortalama fiyatı: {ort_fiyat:.2f} TL")
