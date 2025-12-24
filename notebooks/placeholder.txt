@@ -1,1 +1,8 @@
-adadd
+# Notebooks
+
+This folder contains Jupyter notebooks used for exploratory data analysis (EDA),
+data cleaning, and feature engineering for the used car price prediction project.
+
+The notebooks document the data understanding process and preparation steps
+prior to model training.
+
