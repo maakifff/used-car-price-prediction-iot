@@ -3,39 +3,60 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-# 1. VERİYİ OKUMA (Kitabı Açıyoruz)
-# Verinin 'data/raw' klasöründe olduğunu varsayıyoruz.
-# Eğer indirdiğin dosya adı farklıysa aşağıyı değiştir (örn: 'araba_verisi.csv')
-dosya_yolu = 'data/raw/audi.csv' 
+# --- AYARLAR ---
+dosya_yolu = 'data/raw/skoda.csv'  # Sadece bu dosyaya bakacağız
 
-# Dosya var mı kontrol edelim
+print(f"📂 '{dosya_yolu}' dosyası aranıyor...")
+
+# 1. DOSYAYI KONTROL ET VE OKU
 if os.path.exists(dosya_yolu):
     df = pd.read_csv(dosya_yolu)
-    print("✅ Veri başarıyla okundu!")
+    print("✅ Dosya bulundu ve okundu!")
 else:
-    print("❌ HATA: Dosya bulunamadı! Lütfen data/raw içine csv dosyasını koyduğuna emin ol.")
+    print(f"❌ HATA: '{dosya_yolu}' bulunamadı!")
+    print("Lütfen 'data/raw' klasörünün içine 'skoda.csv' isminde bir dosya olduğundan emin ol.")
     exit()
 
-# 2. VERİYİ ANLAMA (Kitabın Özetine Bakıyoruz)
-print("\n--- Veri Seti Özeti ---")
-print(f"Toplam Araç Sayısı: {len(df)}")
-print("\nİlk 5 Satır:")
+# 2. VERİYİ SENİN İSTEDİĞİN KRİTERLERE GÖRE DÜZENLEME
+# Sütun isimlerini kontrol edelim (Genelde İngilizce olur: price, mileage/km, fuelType vb.)
+# Skoda verisetinde genelde sütunlar şöyledir: 'year', 'price', 'mileage', 'fuelType', 'transmission'
+
+print("\n--- İlk 5 Satır (Ham Veri) ---")
 print(df.head())
 
-# 3. GRAFİK ÇİZME (Görselleştirme) [PDF: Insightful Visualization]
-# KM ve Fiyat arasındaki ilişkiyi çizelim.
+# "200.000 KM'yi aşmış mı?" sütununu ekleyelim
+# Not: Sütun adı 'mileage' ise onu kullanacağız.
+if 'mileage' in df.columns:
+    df['200k_Ustu_Mu'] = df['mileage'] > 200000
+    print("\n--- KM Analizi ---")
+    print(f"200.000 KM üzeri araç sayısı: {df['200k_Ustu_Mu'].sum()}")
+elif 'km_driven' in df.columns: # Bazı verisetlerinde isim budur
+    df['200k_Ustu_Mu'] = df['km_driven'] > 200000
+
+# 3. GRAFİK ÇİZME (Fiyat Analizi)
+# Yıl ve Fiyat arasındaki ilişkiyi görelim
 plt.figure(figsize=(10, 6))
-sns.scatterplot(x='km_driven', y='selling_price', data=df, alpha=0.5)
-plt.title('Kilometre vs Satış Fiyatı (Ne kadar çok KM, o kadar düşük fiyat)')
-plt.xlabel('Kilometre (KM)')
-plt.ylabel('Fiyat (TL)')
 
-# 4. GRAFİĞİ KAYDETME
-# Grafiği ekranda göstermek yerine dosyaya kaydedelim.
-grafik_yolu = 'fiyat_km_grafigi.png'
-plt.savefig(grafik_yolu)
-print(f"\n✅ Grafik çizildi ve '{grafik_yolu}' olarak kaydedildi. O dosyayı açıp bakabilirsin!")
+# Renklendirmeyi (hue) Vites türüne göre yapalım (Manuel/Otomatik farkını görmek için)
+# Eğer sütun adı 'transmission' ise:
+x_ekseni = 'year'
+y_ekseni = 'price'
 
-# Ortalama fiyatı da söyleyelim
-ort_fiyat = df['selling_price'].mean()
-print(f"\nBu veri setindeki araçların ortalama fiyatı: {ort_fiyat:.2f} TL")
+if x_ekseni in df.columns and y_ekseni in df.columns:
+    sns.scatterplot(x=x_ekseni, y=y_ekseni, data=df, hue='transmission', alpha=0.6)
+    plt.title('Skoda Araçların Yıl ve Fiyat Dağılımı')
+    plt.xlabel('Model Yılı')
+    plt.ylabel('Fiyat (Euro/TL)')
+    plt.grid(True)
+    
+    # Grafiği kaydet
+    kayit_ismi = 'skoda_fiyat_analizi.png'
+    plt.savefig(kayit_ismi)
+    print(f"\n✅ Grafik çizildi ve '{kayit_ismi}' olarak kaydedildi.")
+else:
+    print("⚠️ Grafik çizilemedi çünkü 'year' veya 'price' sütunları bulunamadı.")
+
+# 4. ORTALAMA FİYATLAR (Dizel vs Benzin)
+print("\n--- Yakıt Türüne Göre Ortalama Fiyatlar ---")
+if 'fuelType' in df.columns and 'price' in df.columns:
+    print(df.groupby('fuelType')['price'].mean())
