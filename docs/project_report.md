@@ -1,1 +1,9 @@
+Used Car Selling Price Prediction Using Historical Market Data
 
+This project focuses on predicting the selling price of used cars listed on online marketplaces using historical sales data at the individual vehicle level. Accurate price estimation plays a critical role in optimizing profit margins and supporting effective pricing decisions for both individual sellers and dealerships. The dataset used in this project contains structured vehicle attributes such as production year, mileage, fuel type, transmission, and brand information.
+
+The project follows an end-to-end data science pipeline, including data exploration, cleaning, feature engineering, model training, evaluation, and deployment. Exploratory Data Analysis (EDA) was conducted to understand data distributions, identify missing values, and analyze relationships between vehicle features and selling prices. Data preprocessing steps included handling missing values, removing invalid records, and encoding categorical variables.
+
+Several machine learning models were evaluated, starting with a Linear Regression model as a baseline. A Random Forest regression model was then implemented to capture non-linear relationships between features and price, resulting in improved prediction performance. Model evaluation was performed using Mean Absolute Error (MAE) and R² score, balancing accuracy with low-latency inference requirements.
+
+To enhance usability, an interactive dashboard was developed using Streamlit, allowing users to input vehicle characteristics and receive real-time price predictions. The final solution was deployed on an AWS EC2 Free Tier instance, ensuring accessibility and compliance with course constraints. This project demonstrates the practical application of machine learning techniques to a real-world pricing problem within the scope of Internet of Things and Applied Data Science.
