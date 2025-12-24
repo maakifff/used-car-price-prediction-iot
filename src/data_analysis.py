@@ -3,60 +3,74 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-# --- AYARLAR ---
-dosya_yolu = 'data/raw/skoda.csv'  # Sadece bu dosyaya bakacağız
+# --- CONFIGURATION ---
+# We are strictly looking for 'skoda.csv'
+file_name = 'skoda.csv'
+file_path = os.path.join('data', 'raw', file_name)
 
-print(f"📂 '{dosya_yolu}' dosyası aranıyor...")
+print(f"Searching for file at: {file_path} ...")
 
-# 1. DOSYAYI KONTROL ET VE OKU
-if os.path.exists(dosya_yolu):
-    df = pd.read_csv(dosya_yolu)
-    print("✅ Dosya bulundu ve okundu!")
+# 1. LOAD DATA
+if os.path.exists(file_path):
+    df = pd.read_csv(file_path)
+    print("✅ Success: 'skoda.csv' loaded!")
 else:
-    print(f"❌ HATA: '{dosya_yolu}' bulunamadı!")
-    print("Lütfen 'data/raw' klasörünün içine 'skoda.csv' isminde bir dosya olduğundan emin ol.")
+    print(f"❌ ERROR: Could not find '{file_name}'.")
+    print(f"Please check if '{file_name}' exists inside the 'data/raw' folder.")
     exit()
 
-# 2. VERİYİ SENİN İSTEDİĞİN KRİTERLERE GÖRE DÜZENLEME
-# Sütun isimlerini kontrol edelim (Genelde İngilizce olur: price, mileage/km, fuelType vb.)
-# Skoda verisetinde genelde sütunlar şöyledir: 'year', 'price', 'mileage', 'fuelType', 'transmission'
-
-print("\n--- İlk 5 Satır (Ham Veri) ---")
+# 2. DATA INSPECTION
+print("\n--- Dataset Info ---")
+print(f"Total Cars: {len(df)}")
 print(df.head())
 
-# "200.000 KM'yi aşmış mı?" sütununu ekleyelim
-# Not: Sütun adı 'mileage' ise onu kullanacağız.
-if 'mileage' in df.columns:
-    df['200k_Ustu_Mu'] = df['mileage'] > 200000
-    print("\n--- KM Analizi ---")
-    print(f"200.000 KM üzeri araç sayısı: {df['200k_Ustu_Mu'].sum()}")
-elif 'km_driven' in df.columns: # Bazı verisetlerinde isim budur
-    df['200k_Ustu_Mu'] = df['km_driven'] > 200000
+# 3. FEATURE ENGINEERING (200k Check)
+# Standard datasets usually use 'mileage' or 'km_driven'. We check for both.
+mileage_col = 'mileage' if 'mileage' in df.columns else 'km_driven'
+price_col = 'price' if 'price' in df.columns else 'selling_price'
 
-# 3. GRAFİK ÇİZME (Fiyat Analizi)
-# Yıl ve Fiyat arasındaki ilişkiyi görelim
+if mileage_col in df.columns:
+    # Create the column checking if mileage > 200,000
+    df['is_high_mileage'] = df[mileage_col] > 200000
+    
+    # Count how many cars are above 200k
+    count_high = df['is_high_mileage'].sum()
+    print(f"\n--- Mileage Analysis ---")
+    print(f"Column used: '{mileage_col}'")
+    print(f"Cars with > 200,000 km: {count_high}")
+else:
+    print("⚠️ Warning: Could not find a mileage column (mileage/km_driven).")
+
+# 4. VISUALIZATION
+# Plot: Year vs Price (colored by Transmission)
 plt.figure(figsize=(10, 6))
 
-# Renklendirmeyi (hue) Vites türüne göre yapalım (Manuel/Otomatik farkını görmek için)
-# Eğer sütun adı 'transmission' ise:
-x_ekseni = 'year'
-y_ekseni = 'price'
-
-if x_ekseni in df.columns and y_ekseni in df.columns:
-    sns.scatterplot(x=x_ekseni, y=y_ekseni, data=df, hue='transmission', alpha=0.6)
-    plt.title('Skoda Araçların Yıl ve Fiyat Dağılımı')
-    plt.xlabel('Model Yılı')
-    plt.ylabel('Fiyat (Euro/TL)')
+if 'year' in df.columns and price_col in df.columns:
+    # Check if 'transmission' exists for coloring, otherwise just plot blue dots
+    hue_col = 'transmission' if 'transmission' in df.columns else None
+    
+    sns.scatterplot(
+        x='year', 
+        y=price_col, 
+        data=df, 
+        hue=hue_col, 
+        alpha=0.6
+    )
+    plt.title('Skoda Market: Year vs Price')
+    plt.xlabel('Year')
+    plt.ylabel('Price')
     plt.grid(True)
     
-    # Grafiği kaydet
-    kayit_ismi = 'skoda_fiyat_analizi.png'
-    plt.savefig(kayit_ismi)
-    print(f"\n✅ Grafik çizildi ve '{kayit_ismi}' olarak kaydedildi.")
+    # Save the chart
+    plot_name = 'skoda_price_analysis.png'
+    plt.savefig(plot_name)
+    print(f"\n✅ Chart saved as '{plot_name}'.")
 else:
-    print("⚠️ Grafik çizilemedi çünkü 'year' veya 'price' sütunları bulunamadı.")
+    print("❌ Could not create chart. Missing year or price columns.")
 
-# 4. ORTALAMA FİYATLAR (Dizel vs Benzin)
-print("\n--- Yakıt Türüne Göre Ortalama Fiyatlar ---")
-if 'fuelType' in df.columns and 'price' in df.columns:
-    print(df.groupby('fuelType')['price'].mean())
+# 5. SIMPLE STATS
+if 'fuelType' in df.columns and price_col in df.columns:
+    print("\n--- Average Price by Fuel Type ---")
+    print(df.groupby('fuelType')[price_col].mean().round(2))
+
+print("\nAnalysis Script Finished.")
